@@ -1,6 +1,6 @@
 export const xml2json = (xml: string) => {
     const splittedXml = xml.split('\n')
-    //created a base grid with walls and empty spaces
+    // base grid with walls and empty spaces
     const maze = [
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
         ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
@@ -27,16 +27,16 @@ export const xml2json = (xml: string) => {
     let column = -1
 
     const lvlRegExp = /level>(\d+)/i
-    const spRegExp = /<startpoint/i
-    const epRegExp = /<escapepoint/i
+    const startPointRegExp = /<startpoint/i
+    const escapePointRegExp = /<escapepoint/i
     const wallRegExp = /<wall/i
     const rowRegExp = /row>(\d+)/i
     const columnRegExp = /column>(\d+)/i
 
     splittedXml.forEach(line => {
         const levelMatch = line.match(lvlRegExp)
-        const startingPointMatch = line.match(spRegExp)
-        const escapePointMatch = line.match(epRegExp)
+        const startingPointMatch = line.match(startPointRegExp)
+        const escapePointMatch = line.match(escapePointRegExp)
         const wallMatch = line.match(wallRegExp)
 
         if (levelMatch) {
