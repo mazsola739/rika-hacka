@@ -1,49 +1,53 @@
-const isValid = (row, col, n, maze) => {
-    return row >= 0 && col >= 0 && row < n && col < n
-        && maze[row][col] === 1;
+const direction = "DLRU";
+
+
+const directionRow = [1, 0, 0, -1];
+const directionColumn = [0, -1, 1, 0];
+
+
+const isValid = (row, column, maze) => {
+    return row >= 0 && column >= 0 && row < 17 && column < 17
+        && maze[row][column] === 1
 }
 
-const pathfinder = (row, col, maze, n, ans, currentPath) => {
-if (row === n - 1 && col === n - 1) {
-        ans.push(currentPath);
-        return;
+// Function to get all valid paths
+const pathFinder = (row, column, maze, escapeRow, escapeColumn, answer, currentPath) => {
+
+    if (row === escapeRow && column === escapeColumn) {
+        answer.push(currentPath)
+        return
     }
-    // Mark the current cell as blocked
-    maze[row][col] = 0;
+
+    maze[row][column] = 0
 
     for (let i = 0; i < 4; i++) {
-        // Find the next row based on the current row (row)
-        // and the dr[] array
-        const nextrow = row + dr[i];
-        // Find the next column based on the current column
-        // (col) and the dc[] array
-        const nextcol = col + dc[i];
 
-        // Check if the next cell is valid or not
-        if (isValid(nextrow, nextcol, n, maze)) {
-            currentPath += direction[i];
-            // Recursively call the findPath function for
-            // the next cell
-            findPath(nextrow, nextcol, maze, n, ans, currentPath);
-            // Remove the last direction when backtracking
+        const nextRow = row + directionRow[i]
+        const nextColumn = column + directionColumn[i]
+
+        if (isValid(nextRow, nextColumn, maze)) {
+            currentPath += direction[i]
+
+            pathFinder(nextRow, nextColumn, maze, escapeRow, escapeColumn, answer, currentPath);
             currentPath = currentPath.slice(0, -1);
         }
     }
-    // Mark the current cell as unblocked
-    maze[row][col] = 1;
+
+    maze[row][column] = 1
 }
 
+
+// Array to store all the valid paths
 const result = [];
 // Store current path
 let currentPath = "";
 
 if (maze[0][0] !== 0 && maze[17 - 1][17 - 1] !== 0) {
     // Function call to get all valid paths
-    findPath(0, 0, maze, n, result, currentPath);
+    pathFinder(0, 0, maze, 16, 16, result, currentPath);
 }
 
 if (result.length === 0)
     console.log(-1);
 else
     console.log(result.join(" "));
-
