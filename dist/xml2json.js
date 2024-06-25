@@ -397,9 +397,29 @@ const maze1 = `<Maze>
 </Maze>`;
 export const xml2json = (xml) => {
     const splittedXml = xml.split('\n');
-    const result = { level: 0, s: {}, e: {}, w: {}, coords: [] };
-    let coords = { row: 0, column: 0 };
+    const coords = [
+        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'w'],
+        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
+    ];
+    const result = { level: 0, coords: coords };
     let state = '';
+    let row = -1;
+    let column = -1;
     const lvlRegExp = /level>(\d+)/i;
     const spRegExp = /<startpoint/i;
     const epRegExp = /<escapepoint/i;
@@ -418,32 +438,28 @@ export const xml2json = (xml) => {
             state = 's';
         }
         else if (epMatch) {
-            state = 'e';
+            state = 'x';
         }
         else if (wallMatch) {
             state = 'w';
         }
-        if (['s', 'e', 'w'].includes(state)) {
+        if (['s', 'x', 'w'].includes(state)) {
             const rowMatch = line.match(rowRegExp);
             const columnMatch = line.match(columnRegExp);
             if (rowMatch) {
-                result[state].row = +rowMatch[1];
-                result.coords[+rowMatch[1]] = [];
+                row = +rowMatch[1] - 1;
             }
             else if (columnMatch) {
-                result[state].column = +columnMatch[1];
+                column = +columnMatch[1] - 1;
             }
-            if (result[state].column && result[state].row) {
-                result.coords[result[state].row][result[state].column] = state;
-                result[state].row = null;
-                result[state].column = null;
+            if (column >= 0 && row >= 0) {
+                result.coords[row][column] = state;
+                row = -1;
+                column = -1;
                 state = '';
             }
         }
     });
-    delete result.s;
-    delete result.e;
-    delete result.w;
-    console.log(result);
+    console.log(result.coords);
 };
 xml2json(maze1);
