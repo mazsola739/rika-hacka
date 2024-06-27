@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "scripts": {
-  },
-  "dependencies": {
-  },
+  "scripts": {},
   "devDependencies": {
     "@types/node": "^18.17.0",
-    "typescript": "^5.1.6"
-  }
+    "typescript": "^5.5.2"
+  },
+  "description": "This directory contains the required build files, a source code base and a tester Docker file.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

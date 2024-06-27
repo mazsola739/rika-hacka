@@ -1,42 +1,67 @@
-/* Actions RFC
-<Actions>
-    <Step>
-        <Direction>INTEGER 1 (left), 2 (right), 3 (up) or 4 (down)</Direction>
-        <CellNumber>INTEGER 1-14</CellNumber>
-    </Step>
-    <Rotate>
-        <District>INTEGER 1-9</District>
-        <Direction>INTEGER 1 (left) or 2 (right)</Direction>
-    </Rotate>
-</Actions>
-*/
-type Steps = string[]
-type Rotations = string[]
+type Steps = [string, number][]
 
-const generateActions = (steps: Steps, rotations: Rotations) =>
-`<Actions>
-${steps && steps.map(step => step)}
-${rotations ? rotations.map(rotation => rotation) +
-'</Actions>' : '</Actions>'}
-`
-
-    const generateSteps = (direction: string, amount: number) =>
-`   <Step>
-        <Direction>${direction === 'left' ? 1 : direction === 'right' ? 2 : direction === 'up' ? 3 : 4}</Direction>
-        <CellNumber>${amount}</CellNumber>
-    </Step>`
-
-    const generateRotations = (district: number, direction: string) =>
-`   <Rotate>
-        <District>${district}</District>
-        <Direction>${direction === 'left' ? 1 : 2}</Direction>
-    </Rotate>`
-
-export const json2xml = (json: string) => {
-    // TODO generate the right steps and rotations
-    const result = generateActions([generateSteps('right', 1)], [])
-
-    return result
+const directionMap: { [key: string]: number } = {
+  "ML": 1,
+  "MR": 2,
+  "MU": 3,
+  "MD": 4
 }
 
-console.log(json2xml('asd'))
+const getStepsFromPath = (steps: string[]): Steps => {
+  if (steps.length === 0) return []
+
+  let result: Steps = []
+  let currentStep = steps[0]
+  let count = 1
+
+  for (let i = 1; i < steps.length; i++) {
+    if (steps[i] === currentStep) {
+      count++
+    } else {
+      result.push([currentStep, count])
+      currentStep = steps[i]
+      count = 1
+    }
+  }
+  result.push([currentStep, count])
+
+  return result
+}
+
+const generateXmlSteps = (direction: string, amount: number) => `
+  <Step>
+     <Direction>${directionMap[direction]}</Direction>
+     <CellNumber>${amount}</CellNumber>
+  </Step>`
+
+const generateXmlActions = (steps: Steps) =>
+  `<Actions>
+    ${steps.map(([direction, amount]) => generateXmlSteps(direction, amount)).join("\n")}
+  </Actions>`
+
+export const json2xml = (array: string[]) => {
+  const steps = getStepsFromPath(array)
+  const result = generateXmlActions(steps)
+
+  return result
+}
+
+/* console.log(json2xml([
+    'MR', 'MD', 'MD', 'MD', 'MR',
+    'MR', 'MU', 'MU', 'MU', 'MU',
+    'MU', 'MU', 'MR', 'MR', 'MR',
+    'MU', 'MU', 'MR', 'MR', 'MR',
+    'MR', 'MR', 'MR', 'MR', 'MD',
+    'MR', 'MR', 'MD', 'MD', 'MR'
+])) */
+
+/* console.log(json2xml([
+  'MD', 'ML', 'ML', 'ML', 'ML', 'ML',
+  'MD', 'MD', 'MR', 'MR', 'MR', 'MR',
+  'MR', 'MD', 'MD', 'ML', 'ML', 'ML',
+  'MD', 'MD', 'ML', 'ML', 'ML', 'ML',
+  'MD', 'MD', 'MD', 'MD', 'MR', 'MR',
+  'MR', 'MD', 'MD', 'ML', 'ML', 'ML',
+  'MD', 'MD', 'MR', 'MR', 'MR', 'MR',
+  'MR', 'MR', 'MR', 'MD'
+])) */
