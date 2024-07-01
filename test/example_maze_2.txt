@@ -13,6 +13,10 @@
            <Row>2</Row>
            <Column>3</Column>
        </Wall>
+       <Trap>
+           <Row>2</Row>
+           <Column>4</Column>
+       </Trap>
 	   <Wall>
            <Row>2</Row>
            <Column>12</Column>

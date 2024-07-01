@@ -1,10 +1,10 @@
 type Steps = [string, number][]
 
 const directionMap: { [key: string]: number } = {
-  "ML": 1,
-  "MR": 2,
-  "MU": 3,
-  "MD": 4
+  "L": 1,
+  "R": 2,
+  "U": 3,
+  "D": 4
 }
 
 const getStepsFromPath = (steps: string[]): Steps => {
@@ -45,23 +45,3 @@ export const json2xml = (array: string[]) => {
 
   return result
 }
-
-/* console.log(json2xml([
-    'MR', 'MD', 'MD', 'MD', 'MR',
-    'MR', 'MU', 'MU', 'MU', 'MU',
-    'MU', 'MU', 'MR', 'MR', 'MR',
-    'MU', 'MU', 'MR', 'MR', 'MR',
-    'MR', 'MR', 'MR', 'MR', 'MD',
-    'MR', 'MR', 'MD', 'MD', 'MR'
-])) */
-
-/* console.log(json2xml([
-  'MD', 'ML', 'ML', 'ML', 'ML', 'ML',
-  'MD', 'MD', 'MR', 'MR', 'MR', 'MR',
-  'MR', 'MD', 'MD', 'ML', 'ML', 'ML',
-  'MD', 'MD', 'ML', 'ML', 'ML', 'ML',
-  'MD', 'MD', 'MD', 'MD', 'MR', 'MR',
-  'MR', 'MD', 'MD', 'ML', 'ML', 'ML',
-  'MD', 'MD', 'MR', 'MR', 'MR', 'MR',
-  'MR', 'MR', 'MR', 'MD'
-])) */
