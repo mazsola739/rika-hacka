@@ -165,9 +165,9 @@ footer .stamp { font-family: var(--font-mono); font-size: 12px; }
       <p class="lead">An optimal solver for the DT Maze Challenge, a hackathon announced by <strong class="brand">Telekom</strong>. It plans the fewest steps, trap triggers and district rotations from the start to the exit of a 17×17 maze.</p>
     </div>
     <p class="links">
-      <a href="https://github.com/mazsola739/rika-hacka">Source code on GitHub</a>
-      <a href="https://github.com/mazsola739">github.com/mazsola739</a>
-      <!-- Portfolio link goes here, e.g. <a href="https://…">Portfolio</a> -->
+      <a href="https://github.com/mazsola739/rika-hacka" target="_blank" rel="noopener">Source code on GitHub</a>
+      <a href="https://github.com/mazsola739" target="_blank" rel="noopener">github.com/mazsola739</a>
+      <!-- Portfolio link goes here, e.g. <a href="https://…" target="_blank" rel="noopener">Portfolio</a> -->
       <button class="theme-toggle" id="themeToggle" type="button">☾ Dark mode</button>
     </p>
   </header>
@@ -379,10 +379,10 @@ node dist/solution.js "$(cat test/example_maze_3.txt)"</code></pre>
         <div class="tablewrap"><table>
           <thead><tr><th>File</th><th>Responsibility</th><th>Main parts</th></tr></thead>
           <tbody>
-            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/solution.ts"><code>src/solution.ts</code></a></td><td>Entry point. Reads the maze from the command line, prints the answer, and prints an empty <code>&lt;Actions&gt;</code> if anything goes wrong.</td><td>–</td></tr>
-            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/xml2json.ts"><code>src/xml2json.ts</code></a></td><td>Maze XML to data: level, start, exit, walls and traps (1-based, as in the XML).</td><td><code>xml2json</code></td></tr>
-            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/pathfinder.ts"><code>src/pathfinder.ts</code></a></td><td>The solver: board geometry, rotation tables, the reduced maze, the A* search and turning states back into actions.</td><td><code>buildModel</code>, <code>forEachReducedStep</code>, <code>buildEstimate</code>, <code>isSolvable</code>, <code>expand</code>, <code>search</code>, <code>toActions</code>, <code>findPath</code></td></tr>
-            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/json2xml.ts"><code>src/json2xml.ts</code></a></td><td>Actions to the XML format the engine reads.</td><td><code>json2xml</code></td></tr>
+            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/solution.ts" target="_blank" rel="noopener"><code>src/solution.ts</code></a></td><td>Entry point. Reads the maze from the command line, prints the answer, and prints an empty <code>&lt;Actions&gt;</code> if anything goes wrong.</td><td>–</td></tr>
+            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/xml2json.ts" target="_blank" rel="noopener"><code>src/xml2json.ts</code></a></td><td>Maze XML to data: level, start, exit, walls and traps (1-based, as in the XML).</td><td><code>xml2json</code></td></tr>
+            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/pathfinder.ts" target="_blank" rel="noopener"><code>src/pathfinder.ts</code></a></td><td>The solver: board geometry, rotation tables, the reduced maze, the A* search and turning states back into actions.</td><td><code>buildModel</code>, <code>forEachReducedStep</code>, <code>buildEstimate</code>, <code>isSolvable</code>, <code>expand</code>, <code>search</code>, <code>toActions</code>, <code>findPath</code></td></tr>
+            <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/json2xml.ts" target="_blank" rel="noopener"><code>src/json2xml.ts</code></a></td><td>Actions to the XML format the engine reads.</td><td><code>json2xml</code></td></tr>
           </tbody>
         </table></div>
       </div>
