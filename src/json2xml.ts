@@ -1,47 +1,23 @@
-type Steps = [string, number][]
+// Turns the solver's action list into the Actions XML the tester expects:
+//   <Step>   Direction: 1 left, 2 right, 3 up, 4 down  | CellNumber: 1-14
+//   <Rotate> District: 1-9                             | Direction: 1 left, 2 right
 
-const directionMap: { [key: string]: number } = {
-  "L": 1,
-  "R": 2,
-  "U": 3,
-  "D": 4
-}
+import type { MazeAction } from './pathfinder.js'
 
-const getStepsFromPath = (steps: string[]): Steps => {
-  if (steps.length === 0) return []
+const actionToXml = (action: MazeAction) =>
+  action.kind === 'step'
+    ? [
+        '  <Step>',
+        `    <Direction>${action.direction}</Direction>`,
+        `    <CellNumber>${action.cellNumber}</CellNumber>`,
+        '  </Step>',
+      ].join('\n')
+    : [
+        '  <Rotate>',
+        `    <District>${action.district}</District>`,
+        `    <Direction>${action.direction}</Direction>`,
+        '  </Rotate>',
+      ].join('\n')
 
-  let result: Steps = []
-  let currentStep = steps[0]
-  let count = 1
-
-  for (let i = 1; i < steps.length; i++) {
-    if (steps[i] === currentStep) {
-      count++
-    } else {
-      result.push([currentStep, count])
-      currentStep = steps[i]
-      count = 1
-    }
-  }
-  result.push([currentStep, count])
-
-  return result
-}
-
-const generateXmlSteps = (direction: string, amount: number) => `
-  <Step>
-     <Direction>${directionMap[direction]}</Direction>
-     <CellNumber>${amount}</CellNumber>
-  </Step>`
-
-const generateXmlActions = (steps: Steps) =>
-  `<Actions>
-    ${steps.map(([direction, amount]) => generateXmlSteps(direction, amount)).join("\n")}
-  </Actions>`
-
-export const json2xml = (array: string[]) => {
-  const steps = getStepsFromPath(array)
-  const result = generateXmlActions(steps)
-
-  return result
-}
+export const json2xml = (actions: MazeAction[]): string =>
+  ['<Actions>', ...actions.map(actionToXml), '</Actions>'].join('\n')

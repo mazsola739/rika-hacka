@@ -1,85 +1,56 @@
-export const xml2json = (xml: string) => {
-    const splittedXml = xml.split('\n')
-    // base grid with walls and empty spaces
-    const maze = [
-        ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x'],
-        ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'],
-   ]
-    const result = {level: 0, start: [-1, -1], escape: [-1, -1], maze}
+// Parses the maze XML handed over by the tester.
+// The parser works on the whole string (not line by line), so it does not depend on
+// how the XML is formatted: one item per line, everything on one line, extra spaces, etc.
 
-    let state = ''
-    let row = -1
-    let column = -1
+export type Position = { row: number, column: number } // 1-based, exactly as in the XML
 
-    const lvlRegExp = /<level>(\d+)<\/level>/i
-    const startPointRegExp = /<startpoint>/i
-    const escapePointRegExp = /<escapepoint>/i
-    const wallRegExp = /<wall>/i
-    const trapRegExp = /<trap>/i
-    const rowRegExp = /<row>(\d+)<\/row>/i
-    const columnRegExp = /<column>(\d+)<\/column>/i
+export type MazeData = {
+  level: number
+  start: Position
+  escape: Position
+  walls: Position[]
+  traps: Position[]
+}
 
-    splittedXml.forEach(line => {
-        const levelMatch = line.match(lvlRegExp)
-        const startingPointMatch = line.match(startPointRegExp)
-        const escapePointMatch = line.match(escapePointRegExp)
-        const wallMatch = line.match(wallRegExp)
-        const trapMatch = line.match(trapRegExp)
+const readNumber = (xml: string, tag: string): number | null => {
+  const match = new RegExp(`<${tag}>\\s*(\\d+)\\s*</${tag}>`, 'i').exec(xml)
+  return match && match[1] !== undefined ? Number(match[1]) : null
+}
 
-        if (levelMatch) {
-            result.level = +levelMatch[1]
-        }
+const readPosition = (xml: string): Position | null => {
+  const row = readNumber(xml, 'Row')
+  const column = readNumber(xml, 'Column')
+  return row === null || column === null ? null : { row, column }
+}
 
-        if (startingPointMatch) {
-            state = 's'
-        } else if (escapePointMatch) {
-            state = 'e'
-        } else if (wallMatch) {
-            state = 'x'
-        } else if (trapMatch) {
-            state = 'h'
-        }
+const readItems = (xml: string, tag: string): Position[] => {
+  const items: Position[] = []
+  const itemRegExp = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'gi')
+  let match = itemRegExp.exec(xml)
+  while (match) {
+    const position = readPosition(match[1] ?? '')
+    if (position) items.push(position)
+    match = itemRegExp.exec(xml)
+  }
+  return items
+}
 
-        const rowMatch = line.match(rowRegExp)
-        const columnMatch = line.match(columnRegExp)
+export const xml2json = (xml: string): MazeData => {
+  const start = readItems(xml, 'StartPoint')[0]
+  const escape = readItems(xml, 'EscapePoint')[0]
+  if (!start || !escape) {
+    throw new Error('The maze xml must contain a StartPoint and an EscapePoint!')
+  }
 
-        if (rowMatch) {
-            row = +rowMatch[1] - 1
-        }
+  const insideItemsMatch = /<InsideItems>([\s\S]*?)<\/InsideItems>/i.exec(xml)
+  const insideItems = insideItemsMatch ? insideItemsMatch[1] ?? '' : ''
 
-        if (columnMatch) {
-            column = +columnMatch[1] - 1
-        }
-
-        if (state && row >= 0 && column >= 0) {
-            result.maze[row][column] = state
-
-            if (state === 's') {
-                result.start = [row, column]
-            }
-            if (state === 'e') {
-                result.escape = [row, column]
-            }
-
-            row = -1
-            column = -1
-            state = ''
-        }
-    })
-    return result
+  return {
+    level: readNumber(xml, 'Level') ?? 1,
+    start,
+    escape,
+    // The tester keeps walls first, then traps (in xml order). We keep the same order.
+    walls: readItems(insideItems, 'Wall'),
+    traps: readItems(insideItems, 'Trap'),
+  }
 }

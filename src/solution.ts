@@ -1,12 +1,16 @@
 import { xml2json } from './xml2json.js'
-import { findPath } from './pathfinder.js'
+import { findPath, MazeAction } from './pathfinder.js'
 import { json2xml } from './json2xml.js'
 
-const args = process.argv
-const mazeXml = args[2]
+// The tester runs: node dist/solution.js "<Maze>...</Maze>"
+// and reads the Actions XML from stdout, so nothing else may be printed there.
+const mazeXml = process.argv[2] ?? ''
 
-const json = xml2json(mazeXml)
-const path = findPath(json)
+let actions: MazeAction[] = []
+try {
+  actions = findPath(xml2json(mazeXml))
+} catch {
+  actions = []
+}
 
-const actionsXml = json2xml(path)
-console.log(actionsXml)
+console.log(json2xml(actions))
