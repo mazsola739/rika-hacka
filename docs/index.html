@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="An optimal solver for the DT Maze Challenge, a hackathon announced by Telekom: rules, algorithm, verification and an interactive replay.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Maze Escape Solver">
+<meta property="og:description" content="An optimal solver for the DT Maze Challenge, a hackathon announced by Telekom: rules, algorithm, verification and an interactive replay.">
+<title>Maze Escape Solver</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the interactive replay and figures break out to the full 1040px width. */
+:root {
+  --bg: #f5f6f8; --surface: #ffffff; --fg: #1b1f27; --muted: #5d6573; --line: #dde2ea;
+  --cell: #eceff4; --wall: #5b6374; --trap: #d4572e; --start: #6b5fd3; --exit: #1b9a73;
+  --player: #e20074; --trail: #f3a6cc; --rotate: #c08a1a; --accent: #e20074; --accent-soft: #fde6f1; --on-accent: #ffffff; --accent-text: #c4006a;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151b; --surface: #1a1e26; --fg: #e7eaf0; --muted: #9aa3b2; --line: #2c323d;
+  --cell: #222833; --wall: #7d8698; --trap: #e8754e; --start: #8f85ea; --exit: #34b98e;
+  --player: #ff4da6; --trail: #8a2d5c; --rotate: #e0aa3e; --accent: #ff5aae; --accent-soft: #3a1729; --on-accent: #2a0a1a; --accent-text: #ff6bb5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151b; --surface: #1a1e26; --fg: #e7eaf0; --muted: #9aa3b2; --line: #2c323d;
+  --cell: #222833; --wall: #7d8698; --trap: #e8754e; --start: #8f85ea; --exit: #34b98e;
+  --player: #ff4da6; --trail: #8a2d5c; --rotate: #e0aa3e; --accent: #ff5aae; --accent-soft: #3a1729; --on-accent: #2a0a1a; --accent-text: #ff6bb5; color-scheme: dark }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.65; }
+[hidden] { display: none !important; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+header { border-top: 4px solid var(--accent); padding-top: 18px; display: grid; gap: 10px; }
+.eyebrow { font: 500 12px var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.015em; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; scroll-margin-top: 16px; }
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 8px 0 0; text-wrap: balance; }
+p, li { max-width: 70ch; }
+p { margin: 0; }
+.lead { font-size: 18px; color: var(--muted); }
+.brand { color: var(--accent-text); font-weight: 700; }
+a { color: var(--accent-text); text-underline-offset: 3px; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+nav.toc a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); }
+nav.toc a:hover { color: var(--accent-text); border-color: var(--accent); }
+section.doc { display: grid; gap: 14px; padding-top: 28px; border-top: 1px solid var(--line); }
+section.doc ul, section.doc ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+pre.code { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto;
+  font: 13px/1.6 var(--font-mono); color: var(--fg); max-width: 100%; }
+pre.code code { background: none; border: 0; padding: 0; font-size: inherit; }
+.tablewrap { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; font-size: 14px; min-width: 520px; width: 100%; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.callout { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0; padding: 12px 16px; max-width: 74ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.card small { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.card b { display: block; font-family: var(--font-display); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); line-height: 1.2; margin-top: 4px; }
+.card span { color: var(--muted); font-size: 14px; }
+figure { margin: 0; display: grid; gap: 8px; }
+figcaption { color: var(--muted); font-size: 14px; max-width: 70ch; }
+.figrow { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.figrow svg { flex: 1 1 200px; max-width: 280px; height: auto; display: block; }
+.figarrow { font: 500 13px var(--font-mono); color: var(--muted); text-align: center; flex: 0 0 auto; }
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.node { flex: 1 1 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px; line-height: 1.45; min-width: 0; }
+.node small { display: block; font: 500 12px var(--font-mono); color: var(--accent-text); margin-bottom: 2px; }
+.flow .arrow { align-self: center; color: var(--muted); font-size: 18px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+
+button { font: inherit; font-size: 15px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, .act:focus-visible, #replay:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); font-weight: 500; }
+#play { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 500; }
+#play:hover { border-color: var(--accent); filter: brightness(1.06); }
+#replay { display: grid; gap: 14px; scroll-margin-top: 16px; border-radius: 12px; }
+.levels { display: flex; flex-wrap: wrap; gap: 8px; }
+.main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.panel svg { display: block; width: 100%; max-width: 520px; margin: 0 auto; height: auto; }
+.cell { fill: var(--cell); stroke: var(--bg); stroke-width: 0.6; }
+.edge { fill: var(--wall); }
+.st { fill: var(--start); } .ex { fill: var(--exit); }
+.dline { stroke: var(--muted); stroke-width: 1.2; opacity: 0.55; }
+.dnum { fill: var(--muted); font: 500 8px var(--font-mono); }
+.bignum { fill: var(--muted); font: 600 22px var(--font-display); }
+.wall { fill: var(--wall); } .trap { fill: var(--trap); }
+.player { fill: var(--player); stroke: var(--surface); stroke-width: 2; }
+.hl { fill: none; stroke: var(--rotate); stroke-width: 3; }
+.tr { stroke: var(--trail); stroke-width: 4; stroke-linecap: round; }
+.tr.trap-move { stroke: var(--trap); stroke-dasharray: 5 5; }
+.center { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2; }
+.mv { transition: transform .45s ease, opacity .45s ease; }
+@media (prefers-reduced-motion: reduce) { .mv { transition: none; } }
+.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+.now { text-align: center; margin-top: 10px; font-weight: 500; min-height: 1.55em; }
+.now.done { color: var(--exit); }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.stat { background: var(--bg); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.stat b { display: block; font-family: var(--font-display); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+#sCount { color: var(--accent); }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 470px; overflow-y: auto; position: relative; font-size: 15px; }
+.act { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 10px;
+  border-radius: 8px; cursor: pointer; border: 1px solid transparent; max-width: none; }
+.act:hover { background: var(--bg); }
+.act.cur { border-color: var(--accent); background: var(--accent-soft); }
+.act.past { color: var(--muted); }
+.act .n { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.act code { font-size: 12px; color: var(--muted); white-space: nowrap; background: none; border: 0; padding: 0; }
+.act.rot .t::before, .act.trp .t::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 7px; }
+.act.rot .t::before { background: var(--rotate); }
+.act.trp .t::before { background: var(--trap); }
+.xml { margin: 14px 0 0; padding: 10px 12px; background: var(--bg); border-radius: 8px; font: 12px/1.6 var(--font-mono); color: var(--muted); overflow-x: auto; white-space: pre; }
+.note { color: var(--muted); font-size: 14px; }
+footer { border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Hackathon entry · TypeScript · Levels 1–3</p>
+    <h1>Maze Escape Solver</h1>
+    <p class="lead">An optimal solver for the DT Maze Challenge, a hackathon announced by <strong class="brand">Telekom</strong>. It reads a 17×17 maze, plans the shortest list of steps, trap triggers and district rotations that reaches the exit, and prints it in the XML format the challenge's test engine expects.</p>
+    <p class="links"><a href="https://github.com/mazsola739/rika-hacka">Source code on GitHub</a><a href="https://github.com/mazsola739">github.com/mazsola739</a></p>
+    <nav class="toc" aria-label="Contents">
+      <a href="#replay">Replay</a><a href="#overview">Overview</a><a href="#rules">Rules</a><a href="#solver">How the solver works</a>
+      <a href="#verification">Verification</a><a href="#build">Build and run</a><a href="#code">Code map</a><a href="#notes">Design notes</a>
+    </nav>
+  </header>
+
+  <div class="cards" aria-label="Results on the example mazes">
+    <div class="card"><small>Level 1 · walls</small><b>11</b><span>actions, same as before</span></div>
+    <div class="card"><small>Level 2 · traps</small><b>17</b><span>actions, down from 21</span></div>
+    <div class="card"><small>Level 3 · rotation</small><b>8</b><span>actions, previously unsolved</span></div>
+    <div class="card"><small>Random mazes</small><b>450</b><span>tested, 0 rejected by the engine</span></div>
+  </div>
+
+  <section id="replay" tabindex="0" aria-label="Interactive replay. Use the left and right arrow keys to step and space to play or pause.">
+    <h2>Replay</h2>
+    <nav class="levels" id="levels" aria-label="Choose level"></nav>
+    <div class="main">
+      <div class="panel">
+        <svg id="board" viewBox="0 0 374 374" role="img" aria-label="17×17 maze grid showing the player's position"></svg>
+        <div class="controls">
+          <button id="first" aria-label="Back to start">⏮</button>
+          <button id="prev" aria-label="Previous action">◀ Previous</button>
+          <button id="play" style="min-width: 118px; justify-content: center">▶ Play</button>
+          <button id="next" aria-label="Next action">Next ▶</button>
+        </div>
+        <div class="now" id="now" aria-live="polite">Start</div>
+        <div class="legend">
+          <span><i class="sw" style="background: var(--wall)"></i>Wall</span>
+          <span><i class="sw" style="background: var(--trap)"></i>Trap</span>
+          <span><i class="sw" style="background: var(--start)"></i>Start</span>
+          <span><i class="sw" style="background: var(--exit)"></i>Exit</span>
+          <span><i class="sw" style="background: var(--player); border-radius: 50%"></i>Player</span>
+          <span><i class="sw" style="border: 2px solid var(--rotate)"></i>Rotated district</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="stats">
+          <div class="stat"><small>Actions</small><b id="sCount">0</b></div>
+          <div class="stat"><small>Old solution</small><b id="sOld">0</b></div>
+          <div class="stat"><small>Engine</small><b>Accepted</b></div>
+        </div>
+        <ol class="list" id="list"></ol>
+        <pre class="xml" id="xml" aria-label="XML of the current action"></pre>
+      </div>
+    </div>
+    <p class="note">Click the replay, then use ← → to step and space to play or pause. "Old solution" is the action count of the first version of this solver, which could not solve level 3.</p>
+  </section>
+
+  <section class="doc" id="overview">
+    <h2>Overview</h2>
+    <p>The challenge hands every entry a maze as an XML string and expects a list of actions back. The test engine replays those actions, and the maze counts as solved only if the player ends on the exit. The solver is a small command-line program:</p>
+    <div class="flow" role="img" aria-label="Data flow: maze XML from the command line is parsed by xml2json.ts, solved by pathfinder.ts, turned into Actions XML by json2xml.ts and printed to standard output">
+      <div class="node"><small>input</small>Maze XML from the command line</div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="node"><small>xml2json.ts</small>Parse start, exit, walls and traps</div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="node"><small>pathfinder.ts</small>Build the model, run the A* search</div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="node"><small>json2xml.ts</small>Write the Actions XML to stdout</div>
+    </div>
+    <p>The test engine starts it as <code>node dist/solution.js "&lt;Maze&gt;…&lt;/Maze&gt;"</code>, waits up to 60 seconds, and reads the answer from standard output. Anything else printed there would break the XML, so the program prints nothing but the answer.</p>
+  </section>
+
+  <section class="doc" id="rules">
+    <h2>Rules</h2>
+    <p>The rules below are what the challenge's test engine actually enforces. Every solution in this document was checked against that engine.</p>
+
+    <h3>The board</h3>
+    <ul>
+      <li>The maze is 17×17 cells, rows and columns numbered 1–17. The outer ring is wall.</li>
+      <li>The start and the exit sit on the outer ring, never in a corner.</li>
+      <li>Walls and traps can only be placed inside, in rows and columns 2–16.</li>
+    </ul>
+
+    <h3>Actions</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Element</th><th>Field</th><th>Values</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;Step&gt;</code></td><td><code>Direction</code></td><td>1 left, 2 right, 3 up, 4 down</td></tr>
+        <tr><td></td><td><code>CellNumber</code></td><td>1–14 cells in a straight line</td></tr>
+        <tr><td><code>&lt;Rotate&gt;</code></td><td><code>District</code></td><td>1–9</td></tr>
+        <tr><td></td><td><code>Direction</code></td><td>1 left (counter-clockwise), 2 right (clockwise)</td></tr>
+      </tbody>
+    </table></div>
+    <pre class="code"><code>&lt;Actions&gt;
+  &lt;Step&gt;
+    &lt;Direction&gt;4&lt;/Direction&gt;
+    &lt;CellNumber&gt;7&lt;/CellNumber&gt;
+  &lt;/Step&gt;
+  &lt;Rotate&gt;
+    &lt;District&gt;9&lt;/District&gt;
+    &lt;Direction&gt;2&lt;/Direction&gt;
+  &lt;/Rotate&gt;
+&lt;/Actions&gt;</code></pre>
+    <ul>
+      <li>A step must end inside the maze (rows and columns 2–16) or exactly on the exit, and it cannot cross a wall.</li>
+      <li>Because a step is at most 14 cells, crossing the whole maze from the start to the exit always takes at least two steps.</li>
+    </ul>
+
+    <h3>Levels</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Level</th><th>Adds</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Walls</td><td>Plain maze.</td></tr>
+        <tr><td>2</td><td>Traps</td><td>Touching a trap sends the player back to the start, and the trap disappears for good.</td></tr>
+        <tr><td>3</td><td>Rotation</td><td>The inside is split into nine 5×5 districts. A district can be turned left or right, and its walls and traps turn with it. The district the player stands in cannot be turned.</td></tr>
+      </tbody>
+    </table></div>
+
+    <figure>
+      <div class="figrow">
+        <svg id="figDistricts" viewBox="0 0 170 170" role="img" aria-label="District numbering: nine 5 by 5 blocks numbered 1 to 9 row by row"></svg>
+        <svg id="figBefore" viewBox="0 0 110 110" role="img" aria-label="A district before rotation"></svg>
+        <div class="figarrow">Rotate left<br>→</div>
+        <svg id="figAfter" viewBox="0 0 110 110" role="img" aria-label="The same district after one left rotation"></svg>
+      </div>
+      <figcaption>Left: districts are numbered 1–9 row by row. Right: one left rotation moves the item at local row r, column c to row 4 − c, column r (0-based), which is a quarter turn counter-clockwise. The centre cell, outlined, never moves. A right rotation is the same move applied three times.</figcaption>
+    </figure>
+
+    <div class="callout"><p>A quirk of the engine: its path check only works for steps to the right or down. For steps to the left or up it only checks the cell where the step ends, so such a step could jump over a wall. The solver never relies on this. Every step it plans is legal in every direction, and it only ever touches a trap by ending a step exactly on it.</p></div>
+  </section>
+
+  <section class="doc" id="solver">
+    <h2>How the solver works</h2>
+    <p>The goal is the fewest actions. Every step and every rotation counts as one action, so a half turn of a district costs two.</p>
+
+    <h3>1. Parsing</h3>
+    <p><code>xml2json.ts</code> reads the start, the exit, the walls and the traps with regular expressions over the whole string. It does not care whether the XML arrives on one line, with Windows line endings, or with spaces around the numbers. The first version parsed line by line and broke on anything but one tag per line.</p>
+
+    <h3>2. The model</h3>
+    <ul>
+      <li>Cells are numbered 0–288 (row × 17 + column). Each inner cell knows its district (0–8) and its position inside that district (0–24).</li>
+      <li>For every district and each of its four orientations, a lookup table says which wall or trap sits in which cell. A cell is checked with a single array read, whatever the district's orientation.</li>
+      <li>Orientations that look identical (a symmetric district, or an empty one) are merged, so the search never rotates a district pointlessly.</li>
+    </ul>
+
+    <h3>3. Rotate only when it matters</h3>
+    <p>Rotations of different districts don't interfere with each other, and a rotation doesn't affect anything until the player walks through that district. So any solution can be reordered without getting longer: each rotation moves to just before the step that first passes through or lands in its district. The search uses this. It never tries rotations on their own; instead, every step can be preceded by the rotations it needs:</p>
+    <ul>
+      <li>A district the step only passes through is rotated only if its current orientation blocks the way.</li>
+      <li>The district where the step ends may be put into any orientation, because the player will be stuck with that orientation while standing in it.</li>
+      <li>The player's own district can never be rotated.</li>
+    </ul>
+    <p>This removes most of the branching. Without it, a search from the start could rotate nine districts in any combination before taking a single step.</p>
+
+    <h3>4. The reduced maze</h3>
+    <p>Any district except the player's own can be rotated at any time. So whether a cell can be reached depends only on three things: the cell, the orientation of the player's own district, and which traps are gone. That is 289 × 4 = 1,156 states per set of removed traps, against 289 × 4<sup>9</sup> ≈ 75.8 million for the full board. The reduced maze is used twice:</p>
+    <ul>
+      <li><b>Exact solvability check.</b> Removing a trap never makes anything unreachable: the only thing a trap does is send the player back to the start, which is reachable anyway. So the solver keeps removing every reachable trap until the exit appears or nothing changes. Unsolvable level-3 mazes used to burn 25 seconds; now they are rejected in a few milliseconds.</li>
+      <li><b>Search estimate.</b> A breadth-first search backwards from the exit gives, for every reduced state, the number of steps needed if rotations were free and traps could be crossed. It never overestimates, and it never drops by more than the cost of an action. That makes it a consistent A* heuristic, so the search stays optimal.</li>
+    </ul>
+
+    <h3>5. A* search</h3>
+    <ul>
+      <li>A state is the cell, the orientation of all nine districts (2 bits each) and the set of removed traps (one bit each), packed into a single number.</li>
+      <li>Moves are generated cell by cell along each of the four directions, up to 14 cells. A wall stops the line. A trap ends it: the step may land on the trap, which sends the player to the start and removes the trap. The exit ends it too.</li>
+      <li>The cost of a move is one for the step plus the rotations that precede it. Costs are small integers, so the open list is a bucket queue.</li>
+      <li>The search stops when the exit is taken off the queue. With a consistent heuristic, that path has the fewest actions.</li>
+      <li>Safety net: the exact search stops after 3 million states or 25 seconds. A weighted search then finds a valid but possibly longer answer. In testing the net was never needed; the slowest maze took 195 ms.</li>
+    </ul>
+
+    <h3>6. Back to actions</h3>
+    <p>The path is a list of states. Between two neighbouring states, every district whose orientation changed becomes one or two <code>Rotate</code> actions, using the cheaper direction. The movement becomes one <code>Step</code>. When a trap was triggered, the step's target is the trap, not the start where the player ended up. <code>json2xml.ts</code> prints the result.</p>
+  </section>
+
+  <section class="doc" id="verification">
+    <h2>Verification</h2>
+    <p>Two independent checks were run on every maze.</p>
+    <ul>
+      <li><b>The official engine.</b> A small harness loads the challenge's own test engine and lets it replay each answer. It joins the program's output lines without separators, exactly as the real tester does. A maze counts only if the engine reports it solved.</li>
+      <li><b>A brute-force reference.</b> A separate breadth-first search, written from scratch and using a literal copy of the engine's rotation loop, finds the true minimum number of actions. It is slow, so it gives up on large level-3 searches; those mazes are checked by the engine only.</li>
+    </ul>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Test set</th><th class="num">Mazes</th><th class="num">Solved, accepted by engine</th><th class="num">Proven optimal</th><th class="num">Unsolvable</th><th class="num">Rejected</th><th class="num">Slowest</th></tr></thead>
+      <tbody>
+        <tr><td>Example mazes, levels 1–3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">0</td><td class="num">0</td><td class="num">&lt; 10 ms</td></tr>
+        <tr><td>Random, mixed levels</td><td class="num">300</td><td class="num">149</td><td class="num">122</td><td class="num">151</td><td class="num">0</td><td class="num">31 ms</td></tr>
+        <tr><td>Random, level 3 only</td><td class="num">150</td><td class="num">132</td><td class="num">82</td><td class="num">18</td><td class="num">0</td><td class="num">195 ms</td></tr>
+        <tr><td>Hand-made edge cases</td><td class="num">5</td><td class="num">5</td><td class="num">–</td><td class="num">0</td><td class="num">0</td><td class="num">–</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li>Random mazes have 15–50% walls, up to four traps, and a random start and exit. Every second one is written on a single line.</li>
+      <li>"Unsolvable" means there is no way out at all. The exact check proved it for every maze in that column; the reference confirmed it wherever it finished.</li>
+      <li>Wherever the reference finished, the solver's action count matched the true minimum exactly.</li>
+      <li>The example mazes were checked by hand as well: the solver lands on a trap on purpose in level 2 to remove it, which opens a shorter route.</li>
+      <li>Edge cases: a step longer than 14 cells, an exit right next to the start, a trap in the entrance, a corner-to-corner run, and an XML with Windows line endings and padded numbers.</li>
+      <li>The build was reproduced with TypeScript 4.9.5 and the Dockerfile's compiler settings, and it also passes <code>--strict</code>. The Docker image itself was not run on the development machine.</li>
+    </ul>
+  </section>
+
+  <section class="doc" id="build">
+    <h2>Build and run</h2>
+    <p>The scoring build uses the challenge's Dockerfile. It unpacks <code>src.zip</code> and <code>test.zip</code>, compiles the sources with TypeScript 4.9.5 and runs the example maze of the chosen level. Put the Dockerfile, <code>test.zip</code> and <code>src.zip</code> in one folder, then:</p>
+    <pre class="code"><code>docker build --tag dt_maze_challenge .
+docker run --rm -it dt_maze_challenge 3 visualize</code></pre>
+    <p>The first argument is the level (1–3). With <code>visualize</code> the engine redraws the maze after every action; without it, it prints only the final result.</p>
+    <p>To run the solver directly, without Docker:</p>
+    <pre class="code"><code>npm install
+npx -p typescript@4.9.5 tsc
+node dist/solution.js "$(cat test/example_maze_3.txt)"</code></pre>
+    <p><code>src.zip</code> is the submission. It must contain the folder <code>src/</code> with the four <code>.ts</code> files and nothing else. The build files (Dockerfile, <code>test.zip</code>, <code>tsconfig.json</code>, <code>package.json</code>) are the challenge's own and stay unchanged.</p>
+  </section>
+
+  <section class="doc" id="code">
+    <h2>Code map</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>File</th><th>Responsibility</th><th>Main parts</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/solution.ts"><code>src/solution.ts</code></a></td><td>Entry point. Reads the maze from the command line, prints the answer, and prints an empty <code>&lt;Actions&gt;</code> if anything goes wrong.</td><td>–</td></tr>
+        <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/xml2json.ts"><code>src/xml2json.ts</code></a></td><td>Maze XML to data: level, start, exit, walls and traps (1-based, as in the XML).</td><td><code>xml2json</code></td></tr>
+        <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/pathfinder.ts"><code>src/pathfinder.ts</code></a></td><td>The solver: board geometry, rotation tables, the reduced maze, the A* search and turning states back into actions.</td><td><code>buildModel</code>, <code>forEachReducedStep</code>, <code>buildEstimate</code>, <code>isSolvable</code>, <code>expand</code>, <code>search</code>, <code>toActions</code>, <code>findPath</code></td></tr>
+        <tr><td><a href="https://github.com/mazsola739/rika-hacka/blob/main/src/json2xml.ts"><code>src/json2xml.ts</code></a></td><td>Actions to the XML format the engine reads.</td><td><code>json2xml</code></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="doc" id="notes">
+    <h2>Design notes</h2>
+    <ul>
+      <li><b>What is optimised.</b> The solver minimises the number of actions. When two answers are equally short, it doesn't prefer either by distance or by time.</li>
+      <li><b>Conservative moves.</b> It never crosses a wall, never jumps over a trap, and never walks along the outer wall. A legal answer stays legal even if the engine's left/up path check is ever fixed.</li>
+      <li><b>Many traps.</b> The first 20 traps can be triggered. Any further traps are simply avoided like walls, which keeps the state small. The example mazes have at most three.</li>
+      <li><b>Never silent.</b> If no way out exists, the program prints an empty <code>&lt;Actions&gt;</code>, which the engine reports as "trapped" instead of crashing.</li>
+    </ul>
+    <h3>What changed from the first version</h3>
+    <ul>
+      <li>Level 3 was not supported at all. The program returned an empty answer.</li>
+      <li>Level 2: a step into a trap could be merged with the next step in the same direction, producing a step that went too far. Cells marked as visited before a trap reset also stayed blocked afterwards.</li>
+      <li>Steps longer than 14 cells were not split, which the engine rejects.</li>
+      <li>The search counted cells instead of actions, so its answers were often longer than necessary: 21 actions on the level 2 example instead of 17.</li>
+      <li>The parser only worked with one XML tag per line.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>The DT Maze Challenge was a hackathon announced by Telekom. This page documents one participant's solution; it is not an official Telekom page.</p>
+    <p class="links">
+      <a href="https://github.com/mazsola739/rika-hacka">Source code</a>
+      <a href="https://github.com/mazsola739">GitHub profile</a>
+      <!-- Portfolio link goes here, e.g. <a href="https://…">Portfolio</a> -->
+    </p>
+  </footer>
+</div>
+
+<script>
+const DATA = [
+  {"level":1,"start":[9,1],"escape":[7,17],"old":"11","walls":[[2,6],[3,2],[3,3],[3,4],[3,6],[3,8],[3,9],[3,10],[3,11],[3,12],[3,13],[3,14],[3,15],[4,6],[4,15],[4,16],[5,3],[5,4],[5,5],[5,6],[5,8],[5,9],[5,10],[5,11],[5,12],[5,13],[6,3],[6,8],[6,13],[6,14],[6,15],[7,3],[7,5],[7,6],[7,7],[7,8],[7,11],[7,13],[8,3],[8,5],[8,7],[8,11],[8,13],[8,15],[8,16],[9,3],[9,5],[9,7],[9,9],[9,11],[9,13],[10,3],[10,5],[10,7],[10,9],[10,11],[10,13],[10,14],[10,15],[10,16],[11,3],[11,7],[11,9],[11,11],[11,13],[12,5],[12,7],[12,9],[12,11],[12,13],[13,2],[13,3],[13,4],[13,5],[13,7],[13,9],[13,11],[13,13],[13,14],[13,15],[14,7],[14,9],[14,11],[15,3],[15,4],[15,5],[15,6],[15,7],[15,9],[15,11],[15,12],[15,13],[15,14],[15,15],[15,16],[16,9]],"traps":[],"actions":[["S",2,1],["S",4,3],["S",2,2],["S",3,6],["S",2,3],["S",3,2],["S",2,7],["S",4,1],["S",2,2],["S",4,2],["S",2,1]]},
+  {"level":2,"start":[1,9],"escape":[17,9],"old":"21","walls":[[2,3],[2,12],[3,3],[3,5],[3,6],[3,7],[3,8],[3,9],[3,10],[3,12],[3,14],[3,15],[4,10],[4,15],[5,2],[5,3],[5,5],[5,6],[5,7],[5,8],[5,10],[5,12],[5,13],[5,15],[6,5],[6,10],[6,13],[6,15],[7,2],[7,3],[7,4],[7,5],[7,7],[7,8],[7,9],[7,10],[7,11],[7,12],[7,13],[7,15],[8,7],[8,11],[8,15],[9,3],[9,4],[9,5],[9,6],[9,7],[9,9],[9,10],[9,11],[9,13],[9,14],[9,15],[10,3],[10,13],[11,3],[11,4],[11,5],[11,6],[11,7],[11,9],[11,10],[11,11],[11,12],[11,13],[11,15],[11,16],[12,6],[12,13],[13,2],[13,3],[13,4],[13,6],[13,8],[13,9],[13,10],[13,12],[13,13],[13,14],[13,15],[14,6],[14,10],[14,15],[15,3],[15,4],[15,5],[15,6],[15,7],[15,9],[15,10],[15,11],[15,12],[15,13],[15,15]],"traps":[[2,4],[11,8],[16,13]],"actions":[["S",4,1],["S",1,5],["S",4,1],["S",1,5],["S",4,2],["S",2,5],["S",4,2],["S",1,3],["S",4,2],["S",1,4],["S",4,4],["S",2,3],["S",4,2],["S",1,3],["S",4,2],["S",2,7],["S",4,1]]},
+  {"level":3,"start":[1,9],"escape":[17,9],"old":"—","walls":[[2,3],[3,3],[3,5],[3,6],[3,7],[3,8],[3,9],[3,10],[3,11],[3,12],[3,14],[3,15],[4,5],[4,12],[4,15],[5,2],[5,3],[5,4],[5,5],[5,7],[5,9],[5,10],[5,11],[5,12],[5,13],[5,15],[6,3],[6,7],[6,13],[6,15],[7,3],[7,7],[7,8],[7,9],[7,10],[7,11],[7,15],[8,5],[8,7],[8,11],[8,12],[8,13],[8,14],[8,15],[9,2],[9,3],[9,5],[9,7],[9,8],[9,9],[9,11],[10,5],[10,9],[10,11],[10,13],[10,14],[10,15],[11,3],[11,4],[11,5],[11,6],[11,7],[11,9],[11,13],[12,7],[12,9],[12,10],[12,11],[12,12],[12,13],[12,14],[12,15],[12,16],[13,2],[13,3],[13,4],[13,5],[13,7],[14,5],[14,7],[14,8],[14,9],[14,10],[14,11],[14,12],[14,13],[14,14],[14,15],[15,3],[15,5],[15,8],[16,3],[16,8],[16,11]],"traps":[[13,14]],"actions":[["S",4,1],["S",2,7],["S",4,7],["S",1,4],["R",9,2],["S",4,6],["S",1,3],["S",4,2]]}
+];
+const C = 22, NS = "http://www.w3.org/2000/svg";
+const DIR = { 1: [0, -1, "left"], 2: [0, 1, "right"], 3: [-1, 0, "up"], 4: [1, 0, "down"] };
+const board = document.getElementById("board"), list = document.getElementById("list");
+let L = 2, k = 0, timer = null, stages = [], els = {};
+
+const svgEl = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); return e; };
+const topLeft = p => [(p[1] - 1) * C, (p[0] - 1) * C];
+
+function simulate(m) {
+  const items = m.walls.map(p => ({ r: p[0], c: p[1], trap: false, on: true }))
+    .concat(m.traps.map(p => ({ r: p[0], c: p[1], trap: true, on: true })));
+  let pos = [...m.start];
+  const out = [{ pos: [...pos], items: items.map(o => ({ ...o })), label: "Start", seg: null, district: 0, trapAt: null }];
+  for (const a of m.actions) {
+    const st = { seg: null, district: 0, trapAt: null, action: a };
+    if (a[0] === "S") {
+      const d = DIR[a[1]], to = [pos[0] + d[0] * a[2], pos[1] + d[1] * a[2]];
+      st.seg = [pos, to];
+      st.label = "Step " + a[2] + (a[2] === 1 ? " cell " : " cells ") + d[2];
+      const hit = m.level >= 2 && items.find(o => o.trap && o.on && o.r === to[0] && o.c === to[1]);
+      if (hit) { hit.on = false; st.trapAt = to; pos = [...m.start]; st.label += ": trap, back to start"; }
+      else pos = to;
+    } else {
+      const dist = a[1], r0 = Math.floor((dist - 1) / 3) * 5 + 2, c0 = ((dist - 1) % 3) * 5 + 2, turns = a[2] === 2 ? 3 : 1;
+      for (let t = 0; t < turns; t++) items.forEach(o => {
+        if (o.r >= r0 && o.r < r0 + 5 && o.c >= c0 && o.c < c0 + 5) { const lr = o.r - r0, lc = o.c - c0; o.r = r0 + 4 - lc; o.c = c0 + lr; }
+      });
+      st.district = dist;
+      st.label = "Rotate district " + dist + " " + (a[2] === 1 ? "left" : "right");
+    }
+    st.pos = [...pos]; st.items = items.map(o => ({ ...o }));
+    out.push(st);
+  }
+  return out;
+}
+
+const xmlOf = a => a[0] === "S"
+  ? "<Step>\n  <Direction>" + a[1] + "</Direction>\n  <CellNumber>" + a[2] + "</CellNumber>\n</Step>"
+  : "<Rotate>\n  <District>" + a[1] + "</District>\n  <Direction>" + a[2] + "</Direction>\n</Rotate>";
+
+function build() {
+  const m = DATA[L];
+  stages = simulate(m);
+  board.innerHTML = "";
+  for (let r = 1; r <= 17; r++) for (let c = 1; c <= 17; c++) {
+    const edge = r === 1 || c === 1 || r === 17 || c === 17;
+    let cls = edge ? "edge" : "cell";
+    if (r === m.start[0] && c === m.start[1]) cls = "st";
+    if (r === m.escape[0] && c === m.escape[1]) cls = "ex";
+    board.appendChild(svgEl("rect", { x: (c - 1) * C, y: (r - 1) * C, width: C, height: C, class: cls }));
+  }
+  for (const v of [1, 6, 11, 16]) {
+    board.appendChild(svgEl("line", { x1: v * C, y1: C, x2: v * C, y2: 16 * C, class: "dline" }));
+    board.appendChild(svgEl("line", { x1: C, y1: v * C, x2: 16 * C, y2: v * C, class: "dline" }));
+  }
+  for (let d = 1; d <= 9; d++) {
+    const t = svgEl("text", { x: (((d - 1) % 3) * 5 + 1) * C + 3, y: (Math.floor((d - 1) / 3) * 5 + 1) * C + 9, class: "dnum" });
+    t.textContent = d; board.appendChild(t);
+  }
+  els.trail = svgEl("g", {}); board.appendChild(els.trail);
+  els.items = stages[0].items.map(o => {
+    const e = svgEl("rect", { x: 1.5, y: 1.5, width: C - 3, height: C - 3, rx: o.trap ? 7 : 3, class: (o.trap ? "trap" : "wall") + " mv" });
+    board.appendChild(e); return e;
+  });
+  els.hl = svgEl("rect", { width: 5 * C, height: 5 * C, rx: 3, class: "hl", opacity: 0 }); board.appendChild(els.hl);
+  els.player = svgEl("circle", { cx: C / 2, cy: C / 2, r: 7, class: "player mv" }); board.appendChild(els.player);
+
+  list.innerHTML = "";
+  stages.slice(1).forEach((s, i) => {
+    const li = document.createElement("li");
+    li.className = "act" + (s.district ? " rot" : "") + (s.trapAt ? " trp" : "");
+    li.tabIndex = 0;
+    const a = s.action;
+    li.innerHTML = '<span class="n">' + (i + 1) + '.</span><span class="t"></span><code>' +
+      (a[0] === "S" ? "Step " + a[1] + " · " + a[2] : "Rotate " + a[1] + " · " + a[2]) + "</code>";
+    li.querySelector(".t").textContent = s.label;
+    li.onclick = () => { stop(); k = i + 1; show(true); };
+    li.onkeydown = e => { if (e.key === "Enter") li.onclick(); };
+    list.appendChild(li);
+  });
+
+  document.getElementById("sCount").textContent = m.actions.length;
+  document.getElementById("sOld").textContent = m.old;
+  document.querySelectorAll("#levels button").forEach((b, i) => b.setAttribute("aria-pressed", i === L ? "true" : "false"));
+  k = 0; show(true);
+}
+
+const place = (e, p) => { const [x, y] = topLeft(p); e.style.transform = "translate(" + x + "px," + y + "px)"; };
+
+function keepInList(li) {
+  if (li.offsetTop < list.scrollTop) list.scrollTop = li.offsetTop;
+  else if (li.offsetTop + li.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = li.offsetTop + li.offsetHeight - list.clientHeight;
+}
+
+function show(instant) {
+  const s = stages[k];
+  s.items.forEach((o, i) => { place(els.items[i], [o.r, o.c]); els.items[i].style.opacity = o.on ? 1 : 0; });
+  els.trail.innerHTML = "";
+  for (let i = 1; i <= k; i++) {
+    const g = stages[i].seg; if (!g) continue;
+    const a = topLeft(g[0]), b = topLeft(g[1]);
+    els.trail.appendChild(svgEl("line", { x1: a[0] + C / 2, y1: a[1] + C / 2, x2: b[0] + C / 2, y2: b[1] + C / 2,
+      class: "tr" + (stages[i].trapAt ? " trap-move" : ""), opacity: i === k ? 1 : 0.55 }));
+  }
+  if (s.district) {
+    els.hl.setAttribute("x", (((s.district - 1) % 3) * 5 + 1) * C);
+    els.hl.setAttribute("y", (Math.floor((s.district - 1) / 3) * 5 + 1) * C);
+    els.hl.setAttribute("opacity", 1);
+  } else els.hl.setAttribute("opacity", 0);
+  if (s.trapAt && !instant) { place(els.player, s.trapAt); setTimeout(() => { if (stages[k] === s) place(els.player, s.pos); }, 500); }
+  else place(els.player, s.pos);
+
+  const done = k === stages.length - 1;
+  const now = document.getElementById("now");
+  now.textContent = done ? s.label + " · escaped" : s.label;
+  now.classList.toggle("done", done);
+  list.querySelectorAll(".act").forEach((li, i) => {
+    li.classList.toggle("cur", i + 1 === k);
+    li.classList.toggle("past", i + 1 < k);
+    if (i + 1 === k) keepInList(li);
+  });
+  if (k === 0) list.scrollTop = 0;
+  document.getElementById("xml").textContent = k === 0 ? "<Actions>  … " + (stages.length - 1) + " actions …  </Actions>" : xmlOf(s.action);
+}
+
+function step(d) { const n = Math.max(0, Math.min(stages.length - 1, k + d)); if (n !== k) { k = n; show(d < 0); } if (k === stages.length - 1) stop(); }
+function stop() { clearInterval(timer); timer = null; document.getElementById("play").textContent = "▶ Play"; }
+function play() {
+  if (timer) return stop();
+  if (k === stages.length - 1) { k = 0; show(true); }
+  timer = setInterval(() => step(1), 1100);
+  document.getElementById("play").textContent = "⏸ Pause";
+}
+
+const levels = document.getElementById("levels");
+DATA.forEach((m, i) => {
+  const b = document.createElement("button");
+  b.textContent = "Level " + m.level;
+  b.onclick = () => { stop(); L = i; build(); try { history.replaceState(null, "", "#level-" + m.level); } catch (e) {} };
+  levels.appendChild(b);
+});
+document.getElementById("first").onclick = () => { stop(); k = 0; show(true); };
+document.getElementById("prev").onclick = () => { stop(); step(-1); };
+document.getElementById("next").onclick = () => { stop(); step(1); };
+document.getElementById("play").onclick = play;
+document.getElementById("replay").addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") { e.preventDefault(); stop(); step(-1); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); stop(); step(1); }
+  else if (e.key === " " && !(e.target.closest && e.target.closest("button"))) { e.preventDefault(); play(); }
+});
+const levelFromHash = () => { const m = /^#level-([123])$/.exec(location.hash); return m ? Number(m[1]) - 1 : null; };
+window.addEventListener("hashchange", () => { const l = levelFromHash(); if (l !== null && l !== L) { stop(); L = l; build(); } });
+const initial = levelFromHash();
+if (initial !== null) L = initial;
+build();
+
+(function figures() {
+  const D = 10, g = document.getElementById("figDistricts");
+  for (let r = 0; r < 17; r++) for (let c = 0; c < 17; c++) {
+    const edge = r === 0 || c === 0 || r === 16 || c === 16;
+    g.appendChild(svgEl("rect", { x: c * D, y: r * D, width: D, height: D, class: edge ? "edge" : "cell" }));
+  }
+  for (const v of [1, 6, 11, 16]) {
+    g.appendChild(svgEl("line", { x1: v * D, y1: D, x2: v * D, y2: 16 * D, class: "dline" }));
+    g.appendChild(svgEl("line", { x1: D, y1: v * D, x2: 16 * D, y2: v * D, class: "dline" }));
+  }
+  for (let d = 1; d <= 9; d++) {
+    const t = svgEl("text", { x: (((d - 1) % 3) * 5 + 3.5) * D, y: (Math.floor((d - 1) / 3) * 5 + 3.5) * D + 7, class: "bignum", "text-anchor": "middle" });
+    t.textContent = d; g.appendChild(t);
+  }
+  const sample = [[0, 0, "wall"], [0, 1, "wall"], [0, 2, "wall"], [1, 2, "wall"], [3, 4, "wall"], [4, 1, "trap"]];
+  const drawDistrict = (id, items) => {
+    const s = document.getElementById(id), Z = 22;
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) s.appendChild(svgEl("rect", { x: c * Z, y: r * Z, width: Z, height: Z, class: "cell" }));
+    items.forEach(([r, c, kind]) => s.appendChild(svgEl("rect", { x: c * Z + 1.5, y: r * Z + 1.5, width: Z - 3, height: Z - 3, rx: kind === "trap" ? 7 : 3, class: kind })));
+    s.appendChild(svgEl("rect", { x: 2 * Z + 1, y: 2 * Z + 1, width: Z - 2, height: Z - 2, rx: 3, class: "center" }));
+  };
+  drawDistrict("figBefore", sample);
+  drawDistrict("figAfter", sample.map(([r, c, kind]) => [4 - c, r, kind]));
+})();
+</script>
+</body>
+</html>
