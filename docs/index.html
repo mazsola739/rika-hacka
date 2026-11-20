@@ -21,10 +21,7 @@
   --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #12151b; --surface: #1a1e26; --fg: #e7eaf0; --muted: #9aa3b2; --line: #2c323d;
-  --cell: #222833; --wall: #7d8698; --trap: #e8754e; --start: #8f85ea; --exit: #34b98e;
-  --player: #ff4da6; --trail: #8a2d5c; --rotate: #e0aa3e; --accent: #ff5aae; --accent-soft: #3a1729; --on-accent: #2a0a1a; --accent-text: #ff6bb5; color-scheme: dark } }
+/* Light is the default; dark only when the visitor picks it with the toggle (saved in localStorage). */
 :root[data-theme="dark"] {
   --bg: #12151b; --surface: #1a1e26; --fg: #e7eaf0; --muted: #9aa3b2; --line: #2c323d;
   --cell: #222833; --wall: #7d8698; --trap: #e8754e; --start: #8f85ea; --exit: #34b98e;
@@ -612,8 +609,7 @@ fromHash();
 
 (function themeSwitch() {
   const root = document.documentElement, button = document.getElementById("themeToggle");
-  const media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-  const current = () => root.getAttribute("data-theme") || (media && media.matches ? "dark" : "light");
+  const current = () => root.getAttribute("data-theme") === "dark" ? "dark" : "light";
   const label = () => {
     const dark = current() === "dark";
     button.textContent = dark ? "☀ Light mode" : "☾ Dark mode";
@@ -625,7 +621,6 @@ fromHash();
     try { localStorage.setItem("maze-theme", next); } catch (e) {}
     label();
   });
-  if (media && media.addEventListener) media.addEventListener("change", label);
   label();
 })();
 
