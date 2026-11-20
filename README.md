@@ -53,3 +53,7 @@ node dist/solution.js "$(cat test/example_maze_3.txt)"
 ---
 
 Code In – Way Out: Hack the Maze was an online hackathon by Deutsche Telekom IT Solutions. This repository is one participant's solution, not an official Telekom project.
+
+## License
+
+[MIT](LICENSE)
