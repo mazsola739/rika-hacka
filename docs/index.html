@@ -21,7 +21,7 @@
   --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
-/* Light is the default; dark only when the visitor picks it with the toggle (saved in localStorage). */
+/* The page always opens in light mode; the toggle switches to dark for the current visit only (not remembered). */
 :root[data-theme="dark"] {
   --bg: #12151b; --surface: #1a1e26; --fg: #e7eaf0; --muted: #9aa3b2; --line: #2c323d;
   --cell: #222833; --wall: #7d8698; --trap: #e8754e; --start: #8f85ea; --exit: #34b98e;
@@ -160,7 +160,7 @@ footer a:hover { color: var(--accent-text); text-decoration: underline; }
 </style>
 </head>
 <body>
-<script>try { const t = localStorage.getItem("maze-theme"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<script>try { localStorage.removeItem("maze-theme"); } catch (e) {} /* drop the dark choice older versions of the page remembered */</script>
 
 <div class="app">
   <header class="top">
@@ -630,7 +630,6 @@ fromHash();
   button.addEventListener("click", () => {
     const next = current() === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
-    try { localStorage.setItem("maze-theme", next); } catch (e) {}
     label();
   });
   label();
