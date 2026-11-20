@@ -1,6 +1,6 @@
 # Maze Escape Solver
 
-An optimal solver for the **DT Maze Challenge**, a hackathon announced by Telekom, written in TypeScript.
+An optimal solver for **[Code In – Way Out: Hack the Maze](https://www.mphacks.hu/codein-wayout/)**, an online hackathon by Deutsche Telekom IT Solutions (25 June – 5 July 2024), written in TypeScript.
 It reads a 17×17 maze as XML, plans the fewest actions (steps, trap triggers and district rotations) that reach the exit, and prints them in the XML format the challenge's test engine expects.
 
 **Documentation and interactive replay:** https://mazsola739.github.io/rika-hacka/
@@ -52,4 +52,4 @@ node dist/solution.js "$(cat test/example_maze_3.txt)"
 
 ---
 
-The DT Maze Challenge was a hackathon announced by Telekom. This repository is one participant's solution, not an official Telekom project.
+Code In – Way Out: Hack the Maze was an online hackathon by Deutsche Telekom IT Solutions. This repository is one participant's solution, not an official Telekom project.
